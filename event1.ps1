@@ -28,31 +28,38 @@ function Archive-Files
         $sdLength = $sourceDir.length
         $targetDir = $Param2 -replace '\\$',''
         $daysOlder = $Param3
+        $logFile = (get-date -UFormat "%m%d%Y%H%M%S")+"archive-files.log"
+        New-Item -Path $sourceDir -Name $logFile -ItemType File
+        $logFPath = $sourceDir+"\"+$logFile
+        
         
     }
     Process
     {
-    #find all sub directories under the source head and add each directory to array
-    $sourceDirs = get-childitem -Path $sourceDir -recurse |?{ $_.PSIsContainer }| foreach-object -process { $_.FullName }
-    $sourceArray = @()
-    foreach($sDir in $sourceDirs) {
-        $suPath= $targetDir + $sDir.Substring($sdLength)
-        echo $suPath
-        $testTarget= Test-Path -PathType Container $suPath
-        if($testTarget -eq $false) {
-            New-Item -Path $suPath -ItemType Directory
-        }
-        # http://stackoverflow.com/a/5912122 Mathey Steeples solution
-        Get-ChildItem -Path $sDir | Where-Object {$_.LastWriteTime -lt (get-date).AddDays(-$daysOlder)}|Move-Item -Destination $suPath
-
+        echo "*************   Starting Archive Process *************"|Out-File -FilePath $logFPath -Append
+        #find all sub directories under the source head and add each directory to array
+        $sourceDirs = get-childitem -Path $sourceDir -recurse |?{ $_.PSIsContainer }| foreach-object -process { $_.FullName }
         
+        #Main archive section
+        foreach($sDir in $sourceDirs) {
+            $suPath= $targetDir + $sDir.Substring($sdLength)
+            echo $suPath
+            # check to see if subdirectory has been created. if not create.
+            $testTarget= Test-Path -PathType Container $suPath
+            if($testTarget -eq $false) {
+                echo "Creating $suPath"|Out-File -FilePath $logFPath -Append
+                New-Item -Path $suPath -ItemType Directory
+            }
+            # find files older than supplied value and move them to archive path
+            # http://stackoverflow.com/a/5912122 Mathey Steeples solution
+            Get-ChildItem -Path $sDir | Where-Object {$_.LastWriteTime -lt (get-date).AddDays(-$daysOlder)}|Move-Item -Destination $suPath
     }
 
-    #loop through each directory in the array and move, compress, and delete files older than $Param3,
-    #and add each files info to run log
+ 
 
     }
     End
     {
+        echo "*************   Completed Archiving *************"|Out-File -FilePath $logFPath -Append
     }
 }
