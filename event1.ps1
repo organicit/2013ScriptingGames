@@ -36,9 +36,14 @@ function Archive-Files
     $sourceDirs = get-childitem -Path $sourceDir -recurse |?{ $_.PSIsContainer }| foreach-object -process { $_.FullName }
     $sourceArray = @()
     foreach($sDir in $sourceDirs) {
-
-        $suPath= $sDir.Substring($sdLength)
+        $suPath= $targetDir + $sDir.Substring($sdLength)
         echo $suPath
+        $testTarget= Test-Path -PathType Container $suPath
+        if($testTarget -eq $false) {
+            New-Item -Path $suPath -ItemType Directory
+        }
+        # http://stackoverflow.com/a/5912122 Mathey Steeples solution
+        Get-ChildItem -Path $sDir | Where-Object {$_.LastWriteTime -lt (get-date).AddDays(-$daysOlder)}|Move-Item -Destination $suPath
 
         
     }
@@ -46,11 +51,6 @@ function Archive-Files
     #loop through each directory in the array and move, compress, and delete files older than $Param3,
     #and add each files info to run log
 
-
-
-    echo $sourceDir
-    echo $targetDir
-    echo $daysOlder
     }
     End
     {
