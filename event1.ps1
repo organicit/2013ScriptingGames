@@ -1,35 +1,56 @@
 ﻿<#
 .Synopsis
-   Short description
+   Script to Archive logs
 .DESCRIPTION
-   Long description
+   Archive-Files takes user input being "Top Level" directory to archive, the "Destination target", and "Days Older Than" value.  It takes the first parameter and looks for files
+   older than the 3rd parameter.  I archives the files in a compressed zip file in the same directory structure that was found on the source and date time stamps the zipped files.
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+   Archive-Files "C:\Applicaiton\Logs" "\\NASServer\Archives" 90
 #>
-function Verb-Noun
+function Archive-Files
 {
     [CmdletBinding()]
-    [OutputType([int])]
     Param
     (
-        # Param1 help description
-        [Parameter(Mandatory=$true,
-                   ValueFromPipelineByPropertyName=$true,
-                   Position=0)]
+        # Param1 parameter setting the top level path to be archived
         $Param1,
 
-        # Param2 help description
-        [int]
-        $Param2
+        # Param2 sets the desitination archive directory
+        $Param2,
+
+        # Param3 defines the "Files older than" value
+        $Param3
     )
 
     Begin
     {
+        $sourceDir = $Param1 -replace '\\$',''
+        $sdLength = $sourceDir.length
+        $targetDir = $Param2 -replace '\\$',''
+        $daysOlder = $Param3
+        
     }
     Process
     {
+    #find all sub directories under the source head and add each directory to array
+    $sourceDirs = get-childitem -Path $sourceDir -recurse |?{ $_.PSIsContainer }| foreach-object -process { $_.FullName }
+    $sourceArray = @()
+    foreach($sDir in $sourceDirs) {
+
+        $suPath= $sDir.Substring($sdLength)
+        echo $suPath
+
+        
+    }
+
+    #loop through each directory in the array and move, compress, and delete files older than $Param3,
+    #and add each files info to run log
+
+
+
+    echo $sourceDir
+    echo $targetDir
+    echo $daysOlder
     }
     End
     {
