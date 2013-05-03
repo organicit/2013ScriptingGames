@@ -6,6 +6,7 @@ Dr. Scripto is in a tizzy! It seems that someone has allowed a series of applica
 
 
 ##Event 2
+The good Doctor has asked you to write a PowerShell toolthat can show him each server’s name, installed version of Windows, amount of installed physical memory, and number of installed processors. For processors, he’ll be happy getting a count of cores, or sockets, or even both –whatever you can reliably provide across all these different versions of Windows. He has a few text files with computer names – he’d like to pipe the computer names, as strings, to your tool, and have your tool query those computers.
 
 ##Event 3
 
