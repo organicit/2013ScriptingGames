@@ -1,37 +1,87 @@
 ﻿<#
 .Synopsis
-   Short description
+   custom html report for windows disk space.
 .DESCRIPTION
-   Long description
+    custom html report for windows disk space.
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+   Get-DiskReport -ComputerName "Server1","Server2" -Path C:\temp
 #>
-function Verb-Noun
+function Get-DiskReport
 {
     [CmdletBinding()]
-    [OutputType([int])]
     Param
     (
         # Param1 help description
         [Parameter(Mandatory=$true,
-                   ValueFromPipelineByPropertyName=$true,
-                   Position=0)]
-        $Param1,
-
+                   ValueFromPipeline=$true,
+                   ValueFromPipelinebyPropertyName=$True)] $ComputerName,
         # Param2 help description
-        [int]
-        $Param2
+        $Path = "C:\Temp"
     )
+    Begin {
+        $updatedPath = $Path -replace '\\$',''
+    }
+    Process {
+    foreach($node in $ComputerName){
+            $outputFile = $($updatedPath + "\" + $node + ".html")
+           
+           #HTML Header
+            $htmlHead = @"
+             <!DOCTYPE HTML>
+            <html lang="en">
+            <head>
+	            <meta charset="UTF-8">
+	            <title>Drive Free Space Report - $node</title>
+                <style type="text/css">
+		            body {font-family:"Segoe-UI", Frutiger, "Frutiger Linotype", "Dejavu-Sans", "Helvetica Neue", Arial, sans-serif; background: #890000; color: #fff; }
+		            html { font-size: 1.5em; }
+                    th, td {padding: 10px;}
+                    #container {width:800px; margin: 0 auto;}
+                </style>
+                <!--[if lt IE 9]><script src="dist/html5shiv.js"></script>
+                <![endif]-->
+            </head>
+            <body>
+            <div id="container">
+	            <header>
+		            <h2>Local Fixed Disk Report - $node</h2>
+	            </header>
+                <section>
+                    <table>
+                    <thead><tr><th>Drive</th><th>Size(GB)</th><th>Free Space (MB)</th></tr>
+"@
+            $timeStamp =  get-date -Format "MM/dd/yyyy hh:mm:ss"
+            $driveSpace = gwmi win32_volume -ComputerName $node -Filter 'drivetype = 3' | select @{LABEL='Drive'; EXPRESSION={$_.driveletter}},
+                @{LABEL='Size';EXPRESSION={[math]::truncate($_.capacity/1GB)} },
+                @{LABEL='Free';EXPRESSION={[math]::truncate($_.freespace/1MB)} }
+                foreach($row in $driveSpace) {
+                    $htmlBody += "<tr><td>$($row.Drive)</td><td>$($row.Size)</td><td>$($row.Free)</td></tr>"
+                }
 
-    Begin
-    {
+            #html footer
+            $htmlFooter = @"
+                </table>
+            </section>
+            <footer>
+                <hr>
+                <p>$timeStamp</p>
+            </footer>
+            </div>
+            </body>
+            </html>
+"@
+            $fullHtml =  $htmlHead + $htmlBody + $htmlFooter
+            out-file -InputObject $fullHtml -filepath $outputFile
+            $htmlBody = ""
+
+            }
     }
-    Process
-    {
-    }
-    End
-    {
-    }
+    End{}
+
 }
+
+
+
+
+        
+        
